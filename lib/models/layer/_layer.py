@@ -24,7 +24,7 @@ class Conv2dBNLeakyReLU(nn.Module):
         self.kernel_size = kernel_size
         self.stride = stride
         if isinstance(kernel_size, (list, tuple)):
-            self.padding = [int(ii / 2) for ii in kernel_size]
+            self.padding = [int(s / 2) for s in kernel_size]
         else:
             self.padding = int(kernel_size / 2)
         self.leaky_slope = leaky_slope

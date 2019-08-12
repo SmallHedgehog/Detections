@@ -6,7 +6,7 @@ __all__ = ['BasicNet']
 
 
 class BasicNet(nn.Module):
-    """ This class Provides an abstraction layer for every network implemented in this framework.
+    """ This class provides an abstraction layer for every network implemented in this framework.
     There are 1 basic ways of useing this class:
 
     - Override the ``forward()`` function.

@@ -7,21 +7,23 @@ class BasicParser(object):
 
     - Override the ``parser()`` function.
       This funcition return a list of :class:lib.dataset.parser.box.Box
+
+    Attributes:
+        file_name (string): file name
+        boxes (list): list of :class:lib.dataset.parser.box.Box objects
     """
     def __init__(self):
         super(BasicParser, self).__init__()
-        self.boxes = None
+        self.file_name = ''
+        self.boxes = []
 
     def parser(self, parser_file):
         """ Abstraction function that can be overide in the derived class.
 
         Args:
             parser_file (string): path to file
-
-        Returns:
-            list: list of Box objects
         """
         raise NotImplementedError
 
     def __repr__(self):
-        return '_'.join([box.__repr__() for box in self.boxes])
+        return self.file_name + ' ' + '_'.join([box.__repr__() for box in self.boxes])

@@ -6,6 +6,7 @@ class Box(object):
 
     Attributes:
         class_name (string): Class name, default ''
+        class_idx (int): Class index, default -1
         object_id (int): Object identifier for reid purpose, defualt 0
         x_top_left (Number): X pixel coordinate of the top left corner of the bounding box, default 0.
         y_top_left (Number): Y pixel coordinate of the top left corner of the bounding box, defautl 0.
@@ -17,7 +18,8 @@ class Box(object):
         super(Box, self).__init__()
 
         self.class_name = class_name
-        self.object_id = object_id
+        self.class_idx  = -1
+        self.object_id  = object_id
         self.x_top_left = x_top_left
         self.y_top_left = y_top_left
         self.width = width

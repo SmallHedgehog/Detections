@@ -1,0 +1,13 @@
+CHECKPOINT_DIR: checkpoint
+BACKUP_NAME: yolo.weights
+LOG_DIR: logs
+LOG_NAME: yolo_log
+
+LABEL_NAME_FILE: data/voc07.names
+DATA_DIR: H:/dataset/VOC07/VOCdevkit/VOC2007
+
+TRAIN:
+  GPUS: 1
+
+TEST:
+  WEIGHTS: weights/yolo.weights

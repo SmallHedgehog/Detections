@@ -12,6 +12,7 @@ from lib.models.network import Yolo
 from lib.dataset.parser.VOCParser import VOCParser
 from lib.dataset.VOCDataset import VOCDataset
 from lib.transform import RandomHorizontalFlip, Compose
+from lib.transform import RandomCrop
 
 log.basicConfig(format='%(asctime)s:%(levelname)s:%(message)s', level=log.DEBUG)
 
@@ -45,8 +46,24 @@ def test_RandomHorizontalFlip():
     rhf = RandomHorizontalFlip()
     img_trans = Compose([rhf])
     box_trans = Compose([rhf])
-    voc = VOCDataset(config, phase='train', img_transform=img_trans, box_transform=box_trans)
+    voc = VOCDataset(config, phase='train',
+                     img_transform=img_trans, box_transform=box_trans)
     img, boxes = voc[0]
+
+    img = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
+    for box in boxes:
+        pt1, pt2 = box.points()
+        cv2.rectangle(img, pt1, pt2, (0, 255, 0), 2)
+    cv2.imshow('transform', img)
+    cv2.waitKey(0)
+
+def test_RandomCrop():
+    rc = RandomCrop(ratio=0.7)
+    img_trans = Compose([rc])
+    box_trans = Compose([rc])
+    voc = VOCDataset(config, phase='train',
+                     img_transform=img_trans, box_transform=box_trans)
+    img, boxes = voc[1]
 
     img = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
     for box in boxes:
@@ -60,4 +77,5 @@ if __name__ == '__main__':
     # test_yolo()
     # test_VOCParser()
     # test_VOCDatest()
-    test_RandomHorizontalFlip()
+    # test_RandomHorizontalFlip()
+    test_RandomCrop()

@@ -39,6 +39,53 @@ class Box(object):
         """
         self.x_top_left = width - (self.x_top_left + self.width)
 
+    def crop(self, crop):
+        """ Adjust object of Box according to the croped area of the image.
+
+        Args:
+            crop (tuple 4): Crop area of an image, (top_left_x, top_left_y, width, height)
+
+        Returns:
+            bool: if False, the bounding box is not in the cropped area.
+        """
+        left, upper, w, h = crop
+        if self.is_intersect(crop):
+            x_right = self.x_top_left + self.width
+            y_lower = self.y_top_left + self.height
+            # X pixel coordinate and width of the bounding box in pixels
+            if self.x_top_left < left:
+                self.x_top_left = left
+            if x_right > (left + w):
+                self.width = left + w - self.x_top_left
+            # Y pixel coordinate and height of the bounding box in pixels
+            if self.y_top_left < upper:
+                self.y_top_left = upper
+            if y_lower > (upper + h):
+                self.height = upper + h - self.y_top_left
+            # To croped image coordinate
+            self.x_top_left -= left
+            self.y_top_left -= upper
+            return True
+        return False
+
+    def is_intersect(self, box):
+        """ Determine whether two boxes intersect.
+
+        Args:
+            box: (tuple 4): A bounding box, (top_left_x, top_left_y, width, height)
+
+        Returns:
+            bool: if True, two box is intersected.
+        """
+        left, upper, w, h = box
+        x_center_width = (self.x_top_left + self.width / 2) - (left + w / 2)
+        y_center_width = (self.y_top_left + self.height / 2) - (upper + h / 2)
+        x_width = self.width / 2 + w / 2
+        y_width = self.height / 2 + h / 2
+        if x_center_width <= x_width and y_center_width <= y_width:
+            return True
+        return False
+
     def points(self):
         """ Get top left corner and bottom right corner.
 

@@ -1,5 +1,6 @@
 import os.path as osp
 import logging as log
+import copy
 
 from PIL import Image
 

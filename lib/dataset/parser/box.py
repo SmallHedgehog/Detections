@@ -31,6 +31,23 @@ class Box(object):
     def __repr__(self):
         return self.serialize()
 
+    def horizontal_flip(self, width):
+        """ Horizontal flip a Box by change coordinates of x_top_left.
+
+        Args:
+            width (Number): image width
+        """
+        self.x_top_left = width - (self.x_top_left + self.width)
+
+    def points(self):
+        """ Get top left corner and bottom right corner.
+
+        Returns:
+            point of top left corner, ponit of bottom right corner (tuple)
+        """
+        return (int(self.x_top_left), int(self.y_top_left)), \
+               (int(self.x_top_left + self.width), int(self.y_top_left + self.height))
+
     def serialize(self):
         """ Serialize to string. """
         return ' '.join(

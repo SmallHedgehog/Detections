@@ -62,7 +62,7 @@ class Box(object):
                 self.y_top_left = upper
             if y_lower > (upper + h):
                 self.height = upper + h - self.y_top_left
-            # To croped image coordinate
+            # To cropped image coordinate
             self.x_top_left -= left
             self.y_top_left -= upper
             return True

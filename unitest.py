@@ -11,10 +11,11 @@ from easydict import EasyDict
 from lib.models.network import Yolo
 from lib.dataset.parser.VOCParser import VOCParser
 from lib.dataset.VOCDataset import VOCDataset
+from lib.dataset.parser import Box
 from lib.transform import RandomHorizontalFlip, Compose
 from lib.transform import RandomCrop, ColorJitter
 from lib.transform import RandomBlur, RandomShift
-from lib.transform import Resize
+from lib.transform import Resize, ToTensor
 
 log.basicConfig(
     format='[%(levelname)s] %(asctime)s:%(pathname)s:%(lineno)s:%(message)s', level=log.DEBUG)
@@ -132,6 +133,26 @@ def test_Resize():
     cv2.imshow('transform', img)
     cv2.waitKey(0)
 
+def test_ToTensor():
+    toTensor = ToTensor()
+    img_trans = Compose([toTensor])
+    box_trans = Compose([toTensor])
+    voc = VOCDataset(config, phase='train', img_transform=img_trans, box_transform=box_trans)
+    img, boxes = voc[4]
+    print(img.size(), type(boxes), boxes, boxes.size())
+
+    img = img.permute(1, 2, 0)
+    img = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
+    print(img.shape)
+    img_h, img_w = img.shape[:2]
+    for box in list(boxes):
+        class_idx, cx, cy, w, h = int(box[0]), float(box[1]), float(box[2]), float(box[3]), float(box[4])
+        cx, cy, w, h = cx * img_w, cy * img_h, w * img_w, h * img_h
+        pt1, pt2 = (int(cx - w / 2), int(cy - h / 2)), (int(cx + w / 2), int(cy + h / 2))
+        cv2.rectangle(img, pt1, pt2, (0, 255, 0), 2)
+    cv2.imshow('transform', img)
+    cv2.waitKey(0)
+
 
 if __name__ == '__main__':
     # test_yolo()
@@ -142,4 +163,5 @@ if __name__ == '__main__':
     # test_ColorJitter()
     # test_RandomBlur()
     # test_RandomShift()
-    test_Resize()
+    # test_Resize()
+    test_ToTensor()

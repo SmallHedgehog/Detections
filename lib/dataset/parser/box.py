@@ -129,6 +129,22 @@ class Box(object):
         self.width  *= ratio_x
         self.height *= ratio_y
 
+    def toTensor(self, img_size):
+        """ Convert the object of box.Box to tensor.
+
+        Args:
+            img_size (tuple 2): The PIL Image's width and height, (width, height)
+
+        Returns:
+            list: [class_idx, center_x, center_y, width, height]
+        """
+        img_w, img_h = img_size
+        cx = (self.x_top_left + self.width / 2) / img_w
+        cy = (self.y_top_left + self.height / 2) / img_h
+        nw = self.width / img_w
+        nh = self.height / img_h
+        return [self.class_idx, cx, cy, nw, nh]
+
     def points(self):
         """ Get top left corner and bottom right corner.
 

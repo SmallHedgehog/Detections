@@ -3,12 +3,13 @@ import random
 import logging as log
 
 import numpy as np
+import torch
 import torchvision.transforms as transform
 
 from PIL import Image, ImageFilter
 
 __all__ = ['RandomHorizontalFlip', 'RandomCrop', 'ColorJitter', 'RandomBlur',
-           'RandomShift', 'Resize']
+           'RandomShift', 'Resize', 'ToTensor']
 
 
 class RandomHorizontalFlip(object):
@@ -289,3 +290,53 @@ class Resize(object):
 
     def __repr__(self):
         return self.__class__.__name__ + '(size={}, interpolation={})'.format(self.size, self.interpolation)
+
+
+class ToTensor(object):
+    """ Convert a ``PIL Image`` or `lib.dataset.parser.box.Box` to tensor.
+
+    Converts a PIL Image in the range [0, 255] to a torch.FloatTensor of shape (C x H x W)
+    in the range [0.0, 1.0]. Convert the list of box.Box objects to tensor of dimension
+    [number of boxes in list, 5] containing [class_idx, center_x, center_y, width, height]
+    for every detection.
+
+    Note:
+        Convert the given PIL Image and the list of box.Box objects respectively.
+    """
+    def __init__(self):
+        super(ToTensor, self).__init__()
+        self.img_tensor = transform.ToTensor()
+        self.img_size = None
+
+    def __call__(self, data):
+        if data is None:
+            return None
+        elif isinstance(data, collections.Sequence):
+            return self._tensor_box(data)
+        elif isinstance(data, Image.Image):
+            return self._tensor_pil(data)
+        else:
+            log.error('Only works with <Box of lists> or <PIL image>, type:{}'.format(type(data)))
+
+    def _tensor_pil(self, img):
+        self.img_size = img.size
+        return self.img_tensor(img)
+
+    def _tensor_box(self, boxes):
+        """ Convert a list of object of box.Box to a tensor.
+
+        Returns:
+            torch.FloatTensor or None: If not None, return tensor of dimension
+        [number of boxes in list, 5]
+        """
+        if self.img_size is not None:
+            list_boxes = []
+            for box in boxes:
+                list_boxes.append(box.toTensor(self.img_size))
+            return torch.from_numpy(np.array(list_boxes))
+        else:
+            log.error('The attribute img_size of {} is None'.format(self.__class__.__name__))
+            raise ValueError('The attribute img_size of {} is None'.format(self.__class__.__name__))
+
+    def __repr__(self):
+        return self.__class__.__name__ + '()'

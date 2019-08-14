@@ -153,6 +153,32 @@ def test_ToTensor():
     cv2.imshow('transform', img)
     cv2.waitKey(0)
 
+def test_transform():
+    rhf = RandomHorizontalFlip(p=0.5)
+    rc  = RandomCrop(ratio=0.8)
+    cj  = ColorJitter(brightness=0.4, saturation=0.4, hue=0.4)
+    rb  = RandomBlur(p=0.5, r=(2, 3))
+    rs  = RandomShift(p=0.5, ratio=0.1)
+    rs_ = Resize(size=(448, 448))
+    tt  = ToTensor()
+    img_trans = Compose([rhf, rc, cj, rb, rs, rs_, tt])
+    box_trans = Compose([rhf, rc, rs, rs_, tt])
+    voc = VOCDataset(config, phase='train', img_transform=img_trans, box_transform=box_trans)
+    img, boxes = voc[4]
+    print(img.size(), type(boxes), boxes, boxes.size())
+
+    img = img.permute(1, 2, 0)
+    img = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
+    print(img.shape)
+    img_h, img_w = img.shape[:2]
+    for box in list(boxes):
+        class_idx, cx, cy, w, h = int(box[0]), float(box[1]), float(box[2]), float(box[3]), float(box[4])
+        cx, cy, w, h = cx * img_w, cy * img_h, w * img_w, h * img_h
+        pt1, pt2 = (int(cx - w / 2), int(cy - h / 2)), (int(cx + w / 2), int(cy + h / 2))
+        cv2.rectangle(img, pt1, pt2, (0, 255, 0), 2)
+    cv2.imshow('transform', img)
+    cv2.waitKey(0)
+
 
 if __name__ == '__main__':
     # test_yolo()
@@ -164,4 +190,5 @@ if __name__ == '__main__':
     # test_RandomBlur()
     # test_RandomShift()
     # test_Resize()
-    test_ToTensor()
+    # test_ToTensor()
+    test_transform()

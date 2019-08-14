@@ -298,7 +298,7 @@ class ToTensor(object):
     Converts a PIL Image in the range [0, 255] to a torch.FloatTensor of shape (C x H x W)
     in the range [0.0, 1.0]. Convert the list of box.Box objects to tensor of dimension
     [number of boxes in list, 5] containing [class_idx, center_x, center_y, width, height]
-    for every detection.
+    of range [0.0, 1.0] for every detection.
 
     Note:
         Convert the given PIL Image and the list of box.Box objects respectively.
@@ -327,7 +327,7 @@ class ToTensor(object):
 
         Returns:
             torch.FloatTensor or None: If not None, return tensor of dimension
-        [number of boxes in list, 5]
+        [number of boxes in list, 5] of range [0.0, 1.0]
         """
         if self.img_size is not None:
             list_boxes = []

@@ -133,17 +133,23 @@ class Box(object):
         """ Convert the object of box.Box to tensor.
 
         Args:
-            img_size (tuple 2): The PIL Image's width and height, (width, height)
+            img_size (tuple 2): The PIL Image's width and height, (width, height). If not
+        None, get bounxing box of range [0.0, 1.0]
 
         Returns:
             list: [class_idx, center_x, center_y, width, height]
         """
-        img_w, img_h = img_size
-        cx = (self.x_top_left + self.width / 2) / img_w
-        cy = (self.y_top_left + self.height / 2) / img_h
-        nw = self.width / img_w
-        nh = self.height / img_h
-        return [self.class_idx, cx, cy, nw, nh]
+        if img_size is not None:
+            img_w, img_h = img_size
+            cx = (self.x_top_left + self.width / 2) / img_w
+            cy = (self.y_top_left + self.height / 2) / img_h
+            nw = self.width / img_w
+            nh = self.height / img_h
+            return [self.class_idx, cx, cy, nw, nh]
+        else:
+            cx = self.x_top_left + self.width / 2
+            cy = self.x_top_left + self.height / 2
+            return [self.class_idx, cx, cy, self.width, self.height]
 
     def points(self):
         """ Get top left corner and bottom right corner.

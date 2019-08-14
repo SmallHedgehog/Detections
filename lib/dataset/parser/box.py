@@ -86,6 +86,49 @@ class Box(object):
             return True
         return False
 
+    def shift(self, AOI, offset):
+        """ Adjust the bounding box according to AOI(area of interest).
+
+        Args:
+            AOI (tuple 4): Area of interest. (top_left_x, top_left_y, width, height)
+            offset (tuple 2): Shift offset. (x coordinate offset, y coordinate offset)
+
+        Returns:
+            bool: Determine if the bounding box is out of the AOI, if True the box
+        is in the AOI.
+        """
+        x_offset, y_offset = offset
+        aoi_x, aoi_y, aoi_w, aoi_h = AOI
+        self.x_top_left += x_offset
+        self.y_top_left += y_offset
+        if (self.x_top_left + self.width) <= aoi_x or self.x_top_left >= (aoi_x + aoi_w):
+            return False
+        if (self.y_top_left + self.height) <= aoi_y or self.y_top_left >= (aoi_y + aoi_h):
+            return False
+        if self.x_top_left < aoi_x:
+            self.width -= aoi_x - self.x_top_left
+            self.x_top_left = aoi_x
+        if (self.x_top_left + self.width) > (aoi_x + aoi_w):
+            self.width = aoi_x + aoi_w - self.x_top_left
+        if self.y_top_left < aoi_y:
+            self.height -= aoi_y - self.y_top_left
+            self.y_top_left = aoi_y
+        if (self.y_top_left + self.height) > (aoi_y + aoi_h):
+            self.height = aoi_y + aoi_h - self.y_top_left
+        return True
+
+    def resize(self, rescale_ratio):
+        """ Rescale the bounding box according to size.
+
+        Args:
+            rescale_ratio (tuple 2): rescale ratio.
+        """
+        ratio_x, ratio_y = rescale_ratio
+        self.x_top_left *= ratio_x
+        self.y_top_left *= ratio_y
+        self.width  *= ratio_x
+        self.height *= ratio_y
+
     def points(self):
         """ Get top left corner and bottom right corner.
 

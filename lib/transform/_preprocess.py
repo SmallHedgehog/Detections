@@ -2,9 +2,13 @@ import collections
 import random
 import logging as log
 
-from PIL import Image
+import numpy as np
+import torchvision.transforms as transform
 
-__all__ = ['RandomHorizontalFlip', 'RandomCrop']
+from PIL import Image, ImageFilter
+
+__all__ = ['RandomHorizontalFlip', 'RandomCrop', 'ColorJitter', 'RandomBlur',
+           'RandomShift', 'Resize']
 
 
 class RandomHorizontalFlip(object):
@@ -102,3 +106,186 @@ class RandomCrop(object):
 
     def __repr__(self):
         return self.__class__.__name__ + '(ratio={})'.format(self.ratio)
+
+
+class ColorJitter(transform.ColorJitter):
+    """ Randomly change the brightness, contrast and saturation of an image,
+    inherited :class:`torchvision.transforms.ColorJitter`
+    """
+    def __init__(self, brightness=0, constrast=0, saturation=0, hue=0):
+        super(ColorJitter, self).__init__(brightness, constrast, saturation, hue)
+
+
+class RandomBlur(object):
+    """ Randomly blur the given PIL Image by gaussian blur.
+
+    Args:
+        p (float): Probability of the image being flipped. Defualt value is 0.5
+        r (tuple): Gaussian kernel. Defualt value is (2,)
+    """
+    def __init__(self, p=0.5, r=(2,)):
+        super(RandomBlur, self).__init__()
+        self.p = p
+        self.r = self._check_input(r)
+
+    def _check_input(self, r):
+        if not isinstance(r, collections.Sequence):
+            log.error('`r` must be a sequence.')
+            raise ValueError('`r` must be a sequence.')
+        return r
+
+    def __call__(self, img):
+        if img is None:
+            return None
+        elif isinstance(img, Image.Image):
+            return self._rb_pil(img)
+        else:
+            log.error('Only works with <PIL image>, type:{}'.format(type(img)))
+
+    def _rb_pil(self, img):
+        if random.random() < self.p:
+            radius = random.choice(self.r)
+            img = img.filter(ImageFilter.GaussianBlur(radius=radius))
+        return img
+
+    def __repr__(self):
+        return self.__class__.__name__ + '(p={}, r={})'.format(self.p, self.r)
+
+
+class RandomShift(object):
+    """ Randomly shift the given PIL Image.
+
+    Args:
+        p (float): Probability of the image being shifted. Defualt value is 0.5
+        ratio (Number [0-1]): Shift ratio of the given PIL Image. Defualt value is 0.1
+    Note:
+        Shift the given PIL Image and bounding box respectively.
+    """
+    def __init__(self, p=0.5, ratio=0.1):
+        super(RandomShift, self).__init__()
+        self.p = p
+        self.ratio = ratio
+        self.is_shift = False
+        self.AOI = None  # Area of interest
+        self.offset = None
+
+    def __call__(self, data):
+        if data is None:
+            return None
+        elif isinstance(data, collections.Sequence):
+            return self._rs_box(data)
+        elif isinstance(data, Image.Image):
+            return self._rs_pil(data)
+        else:
+            log.error('Only works with <Box of lists> or <PIL image>, type:{}'.format(type(data)))
+
+    def _rs_pil(self, img):
+        """ Shift the given PIL Image randomly. """
+        self._get_shift()
+        if self.is_shift:
+            img_w, img_h = img.size
+            range_x = int(img_w * self.ratio / 2)
+            range_y = int(img_h * self.ratio / 2)
+            offset_x = random.randint(-range_x, range_x)
+            offset_y = random.randint(-range_y, range_y)
+            # Shift PIL Image
+            np_img = np.asarray(img)
+            shift_img = np.zeros(np_img.shape, dtype=np_img.dtype)
+            self.offset = (offset_x, offset_y)
+            if offset_x >= 0 and offset_y >= 0:
+                shift_img[offset_y:, offset_x:, :] = np_img[:img_h-offset_y, :img_w-offset_x, :]
+                self.AOI = (offset_x, offset_y, img_w-offset_x, img_h-offset_y)
+            elif offset_x >= 0 and offset_y < 0:
+                shift_img[:img_h+offset_y, offset_x:, :] = np_img[-offset_y:img_h, :img_w-offset_x, :]
+                self.AOI = (offset_x, 0, img_w-offset_x, img_h+offset_y)
+            elif offset_x < 0 and offset_y >= 0:
+                shift_img[offset_y:, :img_w+offset_x, :] = np_img[:img_h-offset_y, -offset_x:img_w, :]
+                self.AOI = (0, offset_y, img_w+offset_x, img_h-offset_y)
+            elif offset_x < 0 and offset_y < 0:
+                shift_img[:img_h+offset_y, :img_w+offset_x, :] = np_img[-offset_y:img_h, -offset_x:img_w, :]
+                self.AOI = (0, 0, img_w+offset_x, img_h+offset_y)
+            img = Image.fromarray(shift_img)
+        return img
+
+    def _rs_box(self, boxes):
+        """ Adjust the object of Box. """
+        if self.is_shift and self.AOI is not None:
+            adjust_boxes = []
+            for box in boxes:
+                if box.shift(self.AOI, self.offset):
+                    adjust_boxes.append(box)
+            return adjust_boxes
+        return boxes
+
+    def _get_shift(self):
+        self.is_shift = random.random() < self.p
+
+    def __repr__(self):
+        return self.__class__.__name__ + '(p={}, ratio={})'.format(self.p, self.ratio)
+
+
+class Resize(object):
+    """ Resize the given PIL Image to the given size.
+
+    Args:
+        size (sequence or int): Desired output size. If size is a sequence like (h, w),
+    output size will be matched to this. If size is an int, smaller edge of the image
+    will be matched to this number. i.e, if height > width, then image will be rescaled
+    to (size * height / width, size)
+        interpolation (int, optional): Desired interpolation. Default is ``PIL.Image.BILINEAR``
+
+    Note:
+        Resize the given PIL Image and bounding box respectively.
+    """
+    def __init__(self, size, interpolation=Image.BILINEAR):
+        super(Resize, self).__init__()
+        assert isinstance(size, int) or (isinstance(size, collections.Sequence) and len(size) == 2)
+        self.size = size
+        self.interpolation = interpolation
+        self.rescaled_ratio = None
+
+    def __call__(self, data):
+        if data is None:
+            return None
+        elif isinstance(data, collections.Sequence):
+            return [self._resize_box(box) for box in data]
+        elif isinstance(data, Image.Image):
+            return self._resize_pil(data)
+        else:
+            log.error('Only works with <Box of lists> or <PIL image>, type:{}'.format(type(data)))
+
+    def _resize_pil(self, img):
+        """ Resize the given PIL Image according to self.size.
+
+        Args:
+            img (PIL Image): Image to be scaled.
+
+        Returns:
+            PIL Image: Rescaled image.
+        """
+        w, h = img.size
+        if isinstance(self.size, int):
+            if (w <= h and w == self.size) or (h <= w and h == self.size):
+                self.rescaled_ratio = None
+                return img
+            if w < h:
+                ow = self.size
+                oh = int(self.size * h / w)
+                self.rescaled_ratio = (ow / w, self.size / w)
+            else:
+                oh = self.size
+                ow = int(self.size * w / h)
+                self.rescaled_ratio = (self.size / h, oh / h)
+            return img.resize((ow, oh), self.interpolation)
+        else:
+            self.rescaled_ratio = (self.size[0] / w, self.size[1] / h)
+            return img.resize(self.size, self.interpolation)
+
+    def _resize_box(self, box):
+        """ Resize object of Box. """
+        if self.rescaled_ratio is not None:
+            box.resize(self.rescaled_ratio)
+        return box
+
+    def __repr__(self):
+        return self.__class__.__name__ + '(size={}, interpolation={})'.format(self.size, self.interpolation)

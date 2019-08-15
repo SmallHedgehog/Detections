@@ -158,8 +158,8 @@ class Box(object):
         relative position value is in range of [0.0, 1.0].
 
         Returns:
-            list: With size(7): (cell_x, cell_y, class_idx, offset_x, offset_y, width, height),
-        where (cell_x, cell_y) indicate wether grid[cell_x, cell_y] have object.
+            list: With size(7): (cell_y, cell_x, class_idx, offset_x, offset_y, width, height),
+        where (cell_y, cell_x) indicate wether grid[cell_y, cell_x] have object.
         """
         inter_x, inter_y = img_size[0] / grid_size[0], img_size[1] / grid_size[1]
         # The center of bounding box

@@ -6,14 +6,14 @@ __all__ = ['Yolo']
 
 
 class Yolo(BasicNet):
-    def __init__(self, num_boxes=3, num_classes=20, weights_file=None):
+    def __init__(self, num_boxes=3, num_classes=20, grid_size=(7, 7), weights_file=None):
         super(Yolo, self).__init__()
 
         self.num_boxes = num_boxes
         self.num_classes = num_classes
 
         self.backbone = yolo_backbone.Yolo()
-        self.head = yolo_head.Yolo(num_boxes=num_boxes, num_classes=num_classes)
+        self.head = yolo_head.Yolo(num_boxes=num_boxes, num_classes=num_classes, grid_size=grid_size)
 
         if weights_file is not None:
             self.load_weights(weights_file)

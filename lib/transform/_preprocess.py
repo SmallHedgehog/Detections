@@ -380,7 +380,7 @@ class ToGridCellOffset(object):
             torch.IntTensor: Grid of size(self.grid_size x self.grid_size)
             torch.FloatTensor: Bounding box with size(len(boxes), 7)
         """
-        grid, list_boxes = torch.zeros(self.grid_size, dtype=torch.long), []
+        grid, list_boxes = torch.zeros(self.grid_size, dtype=torch.int), []
         for box in boxes:
             infos_box = box.grid_cell_offset(self.img_size, self.grid_size)
             # Note

@@ -16,6 +16,7 @@ from lib.transform import RandomHorizontalFlip, Compose
 from lib.transform import RandomCrop, ColorJitter
 from lib.transform import RandomBlur, RandomShift
 from lib.transform import Resize, ToTensor
+from lib.transform import ToGridCellOffset
 
 log.basicConfig(
     format='[%(levelname)s] %(asctime)s:%(pathname)s:%(lineno)s:%(message)s', level=log.DEBUG)
@@ -179,6 +180,41 @@ def test_transform():
     cv2.imshow('transform', img)
     cv2.waitKey(0)
 
+def test_ToGridCellOffset():
+    rs_ = Resize(size=(448, 448))
+    tt  = ToTensor()
+    gco = ToGridCellOffset(img_size=(448, 448), grid_size=(7, 7))
+    img_trans = Compose([rs_, tt])
+    box_trans = Compose([rs_, gco])
+    voc = VOCDataset(config, phase='train', img_transform=img_trans, box_transform=box_trans)
+    img, boxes = voc[4]
+    print(img.size(), type(boxes), len(boxes))
+    print(boxes[0].size(), boxes[1].size())
+    print(boxes[0])
+    print(boxes[1])
+    img = img.permute(1, 2, 0)
+    img = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
+    for box in boxes[1]:
+        j, i, _, o_x, o_y, w, h = int(box[0]), int(box[1]), int(box[2]), float(box[3]), float(box[4]), float(
+            box[5]), float(box[6])
+        w, h = w * 448, h * 448
+        x, y = (i + o_x) * (448 / 7.) - w / 2, (j + o_y) * (448 / 7.) - h / 2
+        pt1 = (int(x), int(y))
+        pt2 = (int(x + w), int(y + h))
+        cv2.rectangle(img, pt1, pt2, (0, 255, 0), 2)
+        # Center point
+        cv2.line(img, (int(x + w / 2), int(y + h / 2)), (int(x + w / 2), int(y + h / 2)), (255, 0, 0), 10)
+
+    # Draw grid
+    inter_ = 448 // 7
+    for i in range(7):
+        cv2.line(img, (0, inter_ * i), (448, inter_ * i), (0, 0, 255), 2)
+    for j in range(7):
+        cv2.line(img, (inter_ * j, 0), (inter_ * j, 448), (0, 0, 225), 2)
+
+    cv2.imshow('transform', img)
+    cv2.waitKey(0)
+
 
 if __name__ == '__main__':
     # test_yolo()
@@ -191,4 +227,5 @@ if __name__ == '__main__':
     # test_RandomShift()
     # test_Resize()
     # test_ToTensor()
-    test_transform()
+    # test_transform()
+    test_ToGridCellOffset()

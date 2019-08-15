@@ -9,7 +9,7 @@ import torchvision.transforms as transform
 from PIL import Image, ImageFilter
 
 __all__ = ['RandomHorizontalFlip', 'RandomCrop', 'ColorJitter', 'RandomBlur',
-           'RandomShift', 'Resize', 'ToTensor']
+           'RandomShift', 'Resize', 'ToTensor', 'ToGridCellOffset']
 
 
 class RandomHorizontalFlip(object):
@@ -296,9 +296,9 @@ class ToTensor(object):
     """ Convert a ``PIL Image`` or `lib.dataset.parser.box.Box` to tensor.
 
     Converts a PIL Image in the range [0, 255] to a torch.FloatTensor of shape (C x H x W)
-    in the range [0.0, 1.0]. Convert the list of box.Box objects to tensor of dimension
+    in the range [0.0, 1.0]. Convert the list of box. Box objects to tensor of dimension
     [number of boxes in list, 5] containing [class_idx, center_x, center_y, width, height]
-    of range [0.0, 1.0] for every detection.
+    of range [0.0, 1.0] except class_idx for every detection.
 
     Note:
         Convert the given PIL Image and the list of box.Box objects respectively.
@@ -333,10 +333,60 @@ class ToTensor(object):
             list_boxes = []
             for box in boxes:
                 list_boxes.append(box.toTensor(self.img_size))
-            return torch.from_numpy(np.array(list_boxes))
+            return torch.from_numpy(np.array(list_boxes, dtype=np.float))
         else:
             log.error('The attribute img_size of {} is None'.format(self.__class__.__name__))
             raise ValueError('The attribute img_size of {} is None'.format(self.__class__.__name__))
 
     def __repr__(self):
         return self.__class__.__name__ + '()'
+
+
+class ToGridCellOffset(object):
+    """ Gets the relative position of the center of the box relative to the grid cell, the
+    relative position value is in range of [0.0, 1.0].
+
+    Args:
+        img_size (tuple 2): The given PIL Image size. (width, height)
+        grid_size (tuple 2): Grid size. i.e grid is 7 x 7
+
+    Note:
+        Only works on box of class :class:`lib.dataset.parser.box.Box`.
+    """
+    def __init__(self, img_size, grid_size):
+        super(ToGridCellOffset, self).__init__()
+        self.img_size = self._check_input(img_size)
+        self.grid_size = self._check_input(grid_size)
+
+    def _check_input(self, _size):
+        assert isinstance(_size, collections.Sequence) and (len(_size) == 2)
+        return _size
+
+    def __call__(self, boxes):
+        if isinstance(boxes, collections.Sequence):
+            return self._gco_box(boxes)
+        else:
+            log.error('Only works with <Box of lists>, type:{}'.format(type(boxes)))
+
+    def _gco_box(self, boxes):
+        """ Generate grid that each cell of grid indicate wether have object. Grid shape is
+        (self.grid_size x self.grid_size). Generate bounding box list of dimension
+        [len(boxes), 7] containing [grid_x, grid_y, class_idx, offset_x, offset_y, width, height].
+            grid_x and grid_y: x coordinate and y coordinate of gird.
+            offset_x and offset_y: the relative position of the center of the box relative to the
+        grid cell, their value is in range of [0.0, 1.0].
+
+        Returns:
+            torch.IntTensor: Grid of size(self.grid_size x self.grid_size)
+            torch.FloatTensor: Bounding box with size(len(boxes), 7)
+        """
+        grid, list_boxes = torch.zeros(self.grid_size, dtype=torch.long), []
+        for box in boxes:
+            infos_box = box.grid_cell_offset(self.img_size, self.grid_size)
+            # Note
+            grid[infos_box[1], infos_box[0]] = 1
+            list_boxes.append(infos_box)
+        return grid, torch.from_numpy(np.array(list_boxes, dtype=np.float))
+
+    def __repr__(self):
+        return self.__class__.__name__ + '(img_size={}, grid_size={})'.format(self.img_size, self.grid_size)

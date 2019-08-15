@@ -1,3 +1,5 @@
+import math
+
 __all__ = ['Box']
 
 
@@ -148,8 +150,30 @@ class Box(object):
             return [self.class_idx, cx, cy, nw, nh]
         else:
             cx = self.x_top_left + self.width / 2
-            cy = self.x_top_left + self.height / 2
+            cy = self.y_top_left + self.height / 2
             return [self.class_idx, cx, cy, self.width, self.height]
+
+    def grid_cell_offset(self, img_size, grid_size):
+        """ Gets the relative position of the center of the box relative to the grid cell, the
+        relative position value is in range of [0.0, 1.0].
+
+        Returns:
+            list: With size(7): (cell_x, cell_y, class_idx, offset_x, offset_y, width, height),
+        where (cell_x, cell_y) indicate wether grid[cell_x, cell_y] have object.
+        """
+        inter_x, inter_y = img_size[0] / grid_size[0], img_size[1] / grid_size[1]
+        # The center of bounding box
+        cx = self.x_top_left + self.width / 2
+        cy = self.y_top_left + self.height / 2
+        # The coordinate of the center of bounding box in grid
+        cell_x, cell_y = math.ceil(cx / inter_x) - 1, math.ceil(cy / inter_y) - 1
+        # The relative position of the center of box relative to the grid cell
+        offset_cell_x = (cx - cell_x * inter_x) / inter_x
+        offset_cell_y = (cy - cell_y * inter_y) / inter_y
+        width = self.width / img_size[0]
+        height = self.height / img_size[1]
+        # Note
+        return [cell_y, cell_x, self.class_idx, offset_cell_x, offset_cell_y, width, height]
 
     def points(self):
         """ Get top left corner and bottom right corner.

@@ -30,8 +30,8 @@ class Yolov1Loss(nn.Module):
         """
         Args:
             predication (torch.FloatTensor): Tensor with shape
-        (B x grid_size[0] x grid_size[1] x (num_boxes * 5 + num_classes)
-            target (tuple 2): (grid mask with shape torch.int(B x grid_size[0] x grid_size[1])
+        (B, grid_size[0] x grid_size[1] x (num_boxes * 5 + num_classes)
+            target (tuple 2): (grid mask with shape torch.int(B, grid_size[0] x grid_size[1])
         that indicates have object in cell of grid when cell's value is equal to 1,
         list[list] that indicates each example in B have a list of
         [grid_x, grid_y, class_idx, offset_x, offset_y, width, height])

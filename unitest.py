@@ -17,6 +17,7 @@ from lib.transform import RandomCrop, ColorJitter
 from lib.transform import RandomBlur, RandomShift
 from lib.transform import Resize, ToTensor
 from lib.transform import ToGridCellOffset
+from lib.loss import Yolov1Loss
 
 log.basicConfig(
     format='[%(levelname)s] %(asctime)s:%(pathname)s:%(lineno)s:%(message)s', level=log.DEBUG)
@@ -195,7 +196,7 @@ def test_ToGridCellOffset():
     img = img.permute(1, 2, 0)
     img = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
     for box in boxes[1]:
-        j, i, _, o_x, o_y, w, h = int(box[0]), int(box[1]), int(box[2]), float(box[3]), float(box[4]), float(
+        i, j, _, o_x, o_y, w, h = int(box[0]), int(box[1]), int(box[2]), float(box[3]), float(box[4]), float(
             box[5]), float(box[6])
         w, h = w * 448, h * 448
         x, y = (i + o_x) * (448 / 7.) - w / 2, (j + o_y) * (448 / 7.) - h / 2
@@ -215,6 +216,32 @@ def test_ToGridCellOffset():
     cv2.imshow('transform', img)
     cv2.waitKey(0)
 
+def test_Yolov1Loss():
+    v1_loss = Yolov1Loss(weight_coord=1., weight_noobject=1., num_boxes=2, num_classes=20, grid_size=(7, 7))
+    print(v1_loss)
+    img_size, grid_size = (448, 448), (7, 7)
+    rs_ = Resize(size=img_size)
+    tt  = ToTensor()
+    gco = ToGridCellOffset(img_size=img_size, grid_size=grid_size)
+    img_trans = Compose([rs_, tt])
+    box_trans = Compose([rs_, gco])
+    voc = VOCDataset(config, phase='train', img_transform=img_trans, box_transform=box_trans)
+    img, boxes = voc[4]
+    # print(img.size(), type(boxes), boxes[0].size(), boxes[1].size())
+    img = img.unsqueeze(0)
+    grid = boxes[0].unsqueeze(0)
+    box = boxes[1].unsqueeze(0)
+    # print(img.size(), type(boxes), grid.size(), box.size())
+
+    net = Yolo(num_boxes=3, num_classes=20, grid_size=grid_size)
+    # net = net.cuda()
+    # img = img.cuda()
+    out = net(img)
+    # print(out.size())
+    # print(out.view(out.size(0), grid_size[0], grid_size[1], -1).size())
+    loss = v1_loss(out, (grid, box))
+    print(loss)
+
 
 if __name__ == '__main__':
     # test_yolo()
@@ -228,4 +255,5 @@ if __name__ == '__main__':
     # test_Resize()
     # test_ToTensor()
     # test_transform()
-    test_ToGridCellOffset()
+    # test_ToGridCellOffset()
+    test_Yolov1Loss()

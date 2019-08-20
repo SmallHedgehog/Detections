@@ -47,6 +47,8 @@ class Yolov1Loss(nn.Module):
             grid (torch.FloatTensor, 2-D): (grid_size[0], grid_size[1])
             boxes (torch.FloatTensor, 2-D): (number of box, 7)
         """
+        _device = pred.device
+        grid, boxes = grid.to(_device), boxes.float().to(_device)
         # Object index in grid
         object_index = (grid == 1).nonzero()
         # No object index in grid
@@ -159,14 +161,15 @@ class Yolov1Loss(nn.Module):
                 BEST_box_idx = box_idx
 
         iou = self._calc_iou(pred_boxes[BEST_pred_idx], cell_boxes[BEST_box_idx])
-        object_iou_loss = (confidences[BEST_pred_idx] - iou) ** 2
+        object_iou_loss = ((confidences[BEST_pred_idx] - iou) ** 2).float()
         object_cls_loss = (1. - class_scores[cell_boxes[BEST_box_idx][2].long()]) ** 2
-        object_coord_offset_loss = ((pred_boxes[BEST_pred_idx][0] - cell_boxes[BEST_box_idx][3]) ** 2) + \
-                                   ((pred_boxes[BEST_pred_idx][1] - cell_boxes[BEST_box_idx][4]) ** 2)
+        object_coord_offset_loss = ((pred_boxes[BEST_pred_idx][0] - cell_boxes[BEST_box_idx][3]) ** 2).float() + \
+                                   ((pred_boxes[BEST_pred_idx][1] - cell_boxes[BEST_box_idx][4]) ** 2).float()
         object_coord_wh_loss = ((torch.sqrt(pred_boxes[BEST_pred_idx][2]) -
-                                 torch.sqrt(cell_boxes[BEST_box_idx][5])) ** 2) + \
+                                 torch.sqrt(cell_boxes[BEST_box_idx][5])) ** 2).float() + \
                                ((torch.sqrt(pred_boxes[BEST_pred_idx][3]) -
-                                 torch.sqrt(cell_boxes[BEST_box_idx][6])) ** 2)
+                                 torch.sqrt(cell_boxes[BEST_box_idx][6])) ** 2).float()
+
         return self.weight_coord * (object_coord_offset_loss + object_coord_wh_loss) + \
                object_iou_loss + object_cls_loss
 

@@ -1,6 +1,6 @@
 from ..backbone import yolo as yolo_backbone
 from ..head import yolo as yolo_head
-from ._basicnet import BasicNet
+from ._net import BasicNet
 
 __all__ = ['Yolo']
 
@@ -11,6 +11,7 @@ class Yolo(BasicNet):
 
         self.num_boxes = num_boxes
         self.num_classes = num_classes
+        self.grid_size = grid_size
 
         self.backbone = yolo_backbone.Yolo()
         self.head = yolo_head.Yolo(num_boxes=num_boxes, num_classes=num_classes, grid_size=grid_size)
@@ -24,3 +25,7 @@ class Yolo(BasicNet):
         x = self.backbone(x)
 
         return self.head(x)
+
+    def __repr__(self):
+        return self.__class__.__name__ + '(num_boxes={}, num_classes={}, grid_size={})' \
+                ''.format(self.num_boxes, self.num_classes, self.grid_size)

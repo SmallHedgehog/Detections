@@ -6,8 +6,36 @@ LOG_NAME: yolo_log
 LABEL_NAME_FILE: data/voc07.names
 DATA_DIR: H:/dataset/VOC07/VOCdevkit/VOC2007
 
+SEED: 1000
+
+MODEL_CONFIG:
+  CUDA: True
+  NAME: Yolo
+  INPUT:
+    num_boxes: 2
+    num_classes: 20
+    grid_size: 7
+    # weight_file: None
+
+LOSS_CONFIG:
+  NAME: Yolov1Loss
+  INPUT:
+    weight_coord: 5.
+    weight_noobject: 0.5
+
 TRAIN:
   GPUS: 1
+  LR: 0.001
+  MAX_EPOCH: 200
+  BATCH_SIZE: 16
+  OPTIMIZER:
+    TYPE: SGD
+    MOMENTUM: 0.9
+    WEIGHT_DECAY: 5e-4
+  SCHEDULER:
+    TYPE: consine
+  BACKUP_RATE: 10000
+  INNER_RATE: 5000
 
 TEST:
   WEIGHTS: weights/yolo.weights

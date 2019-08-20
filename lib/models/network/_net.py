@@ -1,5 +1,6 @@
 import logging as log
 
+import torch
 import torch.nn as nn
 
 __all__ = ['BasicNet']
@@ -33,7 +34,11 @@ class BasicNet(nn.Module):
         Args:
             weight_file (str): path to file
         """
-        raise NotImplementedError
+        state = {
+            'weights': self.state_dict()
+        }
+        torch.save(state, weight_file)
+        log.info('Saved weights as {}'.format(weight_file))
 
     def init_weights(self, mode='fan_in', slope=0):
         for m in self.modules():

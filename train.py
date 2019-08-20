@@ -40,8 +40,12 @@ if __name__ == '__main__':
     img_trans = Compose([rs_, tt_])
     box_trans = Compose([rs_, gco])
 
-    dataset = VOCDataset(config, phase='train', img_transform=img_trans, box_transform=box_trans)
-    dataloader = MakeDataLoader(dataset, batch_size=config.TRAIN.BATCH_SIZE, shuffle=True)
+    dataloader = MakeDataLoader(
+        dataset=VOCDataset(config, phase='train',
+                           img_transform=img_trans,
+                           box_transform=box_trans),
+        batch_size=config.TRAIN.BATCH_SIZE,
+        shuffle=True)
 
     exe = Execute(config=config, dataloader=dataloader)
 

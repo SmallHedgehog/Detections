@@ -4,7 +4,7 @@ import copy
 
 from PIL import Image
 
-from ._basicdataset import BasicDataset
+from ._dataset import BasicDataset
 from .parser.VOCParser import VOCParser
 
 __all__ = ['VOCDataset']

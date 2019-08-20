@@ -18,6 +18,7 @@ from lib.transform import RandomBlur, RandomShift
 from lib.transform import Resize, ToTensor
 from lib.transform import ToGridCellOffset
 from lib.loss import Yolov1Loss
+from lib.execute import Execute
 
 log.basicConfig(
     format='[%(levelname)s] %(asctime)s:%(pathname)s:%(lineno)s:%(message)s', level=log.DEBUG)
@@ -242,6 +243,9 @@ def test_Yolov1Loss():
     loss = v1_loss(out, (grid, box))
     print(loss)
 
+def test_Execute():
+    exe = Execute(config)
+
 
 if __name__ == '__main__':
     # test_yolo()
@@ -256,4 +260,5 @@ if __name__ == '__main__':
     # test_ToTensor()
     # test_transform()
     # test_ToGridCellOffset()
-    test_Yolov1Loss()
+    # test_Yolov1Loss()
+    test_Execute()

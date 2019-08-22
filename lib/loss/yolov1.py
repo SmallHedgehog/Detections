@@ -53,24 +53,26 @@ class Yolov1Loss(nn.Module):
         object_index = (grid == 1).nonzero()
         # No object index in grid
         noobject_index = (grid != 1).nonzero()
-        box_obj_indx = boxes[:, :2].long()
         # Find all object index in a cell of grid
         if object_index.size(0) != 0:
-            loss = self._fetch_object_one(object_index[0], box_obj_indx, boxes, pred)
             # No object loss
-            if noobject_index.size(0) != 0:
-                loss += self._noobject_loss(pred[noobject_index[:, 0], noobject_index[:, 1]])
+            # if noobject_index.size(0) != 0:
+            loss = self._noobject_loss(pred[noobject_index[:, 0], noobject_index[:, 1]])
+            if boxes.size(0) != 0:
+                loss += self._fetch_object_one(object_index[0], boxes, pred)
         else:
             # No object loss
             loss = self._noobject_loss(pred[noobject_index[:, 0], noobject_index[:, 1]])
 
         # Object loss
         for obj_idx in range(1, object_index.size(0)):
-            loss += self._fetch_object_one(object_index[obj_idx], box_obj_indx, boxes, pred)
+            if boxes.size(0) != 0:
+                loss += self._fetch_object_one(object_index[obj_idx], boxes, pred)
 
         return loss
 
-    def _fetch_object_one(self, object_index, box_obj_indx, boxes, pred):
+    def _fetch_object_one(self, object_index, boxes, pred):
+        box_obj_indx = boxes[:, :2].long()
         object_index = object_index[torch.Tensor([1, 0]).long()]
         box_idxes = (((box_obj_indx == object_index).sum(dim=1)) == 2).nonzero()
         # Shape from [-1, 1] to [-1]

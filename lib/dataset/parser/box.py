@@ -161,6 +161,8 @@ class Box(object):
             list: With size(7): (cell_x, cell_y, class_idx, offset_x, offset_y, width, height),
         where (cell_x, cell_y) indicate wether grid[cell_y, cell_x] have object.
         """
+        if self.width == 0 or self.height == 0:
+            return None
         inter_x, inter_y = img_size[0] / grid_size[0], img_size[1] / grid_size[1]
         # The center of bounding box
         cx = self.x_top_left + self.width / 2

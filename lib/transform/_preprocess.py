@@ -383,9 +383,10 @@ class ToGridCellOffset(object):
         grid, list_boxes = torch.zeros(self.grid_size, dtype=torch.int), []
         for box in boxes:
             infos_box = box.grid_cell_offset(self.img_size, self.grid_size)
-            # Note
-            grid[infos_box[1], infos_box[0]] = 1
-            list_boxes.append(infos_box)
+            if infos_box is not None:
+                # Note
+                grid[infos_box[1], infos_box[0]] = 1
+                list_boxes.append(infos_box)
         return grid, torch.from_numpy(np.array(list_boxes, dtype=np.float))
 
     def __repr__(self):

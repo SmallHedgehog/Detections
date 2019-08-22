@@ -26,7 +26,15 @@ class BasicNet(nn.Module):
         Args:
             weight_file (str): path to file
         """
-        raise NotImplementedError
+        self_state = self.state_dict()
+        load_state = torch.load(weight_file)['weights']
+        if self_state.keys() != load_state.keys():
+            log.warning('Modules not matching, performing partial update')
+            update_state = {k: v for k, v in load_state.items() if k in self_state}
+            self_state.update(update_state)
+            load_state = self_state
+        self.load_state_dict(load_state)
+        log.info('Loaded weights from {}'.format(weight_file))
 
     def save_weights(self, weight_file):
         """ This function will save the weights to a file.

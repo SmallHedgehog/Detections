@@ -7,10 +7,16 @@ __all__ = ['Collate', 'MakeDataLoader']
 class Collate(object):
     def __call__(self, batch):
         images, grids, boxes = [], [], []
-        for image, (grid, box) in batch:
-            images.append(image.unsqueeze(0))
-            grids.append(grid)
-            boxes.append(box)
+        for obj in batch:
+            if isinstance(obj, tuple):
+                image, (grid, box) = obj
+                images.append(image.unsqueeze(0))
+                grids.append(grid)
+                boxes.append(box)
+            else:
+                images.append(obj.unsqueeze(0))
+        if len(grids) == 0:
+            return torch.cat(images, dim=0)
         return torch.cat(images, dim=0), (grids, boxes)
 
 

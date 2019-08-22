@@ -47,16 +47,19 @@ class VOCDataset(BasicDataset):
         return len(self.file_name_sets)
 
     def __getitem__(self, index):
-        _, boxes = self.parser.parser(
-            osp.join(self.root_dir, 'Annotations', self.file_name_sets[index] + '.xml'))
-        for idx in range(len(boxes)):
-            boxes[idx].class_idx = self.label2class[boxes[idx].class_name]
+        global boxes
+        if self.phase == 'train':
+            _, boxes = self.parser.parser(
+                osp.join(self.root_dir, 'Annotations', self.file_name_sets[index] + '.xml'))
+            for idx in range(len(boxes)):
+                boxes[idx].class_idx = self.label2class[boxes[idx].class_name]
         img = Image.open(osp.join(self.root_dir, 'JPEGImages', self.file_name_sets[index] + '.jpg'))
 
         # Transform
         if self.img_trans is not None:
             img = self.img_trans(img)
-        if self.box_trans is not None:
-            boxes = self.box_trans(boxes)
-
-        return img, boxes
+        if self.phase == 'train':
+            if self.box_trans is not None:
+                boxes = self.box_trans(boxes)
+                return img, boxes
+        return img

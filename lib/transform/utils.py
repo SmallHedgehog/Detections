@@ -1,3 +1,5 @@
+import numpy as np
+
 __all__ = ['Compose']
 
 
@@ -28,3 +30,18 @@ class Compose(list):
             format_string += '\n  {}'.format(tf.__class__.__name__)
         format_string += '\n]'
         return format_string
+
+
+def pad_to_square(image, value=0):
+    if isinstance(image, np.ndarray):
+        W, H, _ = image.shape
+    else:
+        H, W = image.size
+    diff = np.abs(H - W)
+    pad1, pad2 = diff // 2, diff - diff // 2
+    pad = (0, 0, pad1, pad2) if H <= W else (pad1, pad2, 0, 0)
+    image = np.pad(image, ((pad[0], pad[1]), (pad[2], pad[3]), (0, 0)), 'constant', constant_values=(value, value))
+    return image
+
+def resize(image, size):
+    return cv2.resize(image, (size, size))
